@@ -6,6 +6,37 @@
 
 ---
 
+## 下载代码
+
+**GitHub 仓库地址**：
+
+```
+https://github.com/jiayun-xiong/classroom-monitoring-system
+```
+
+### 方式一：直接下载 ZIP 压缩包（推荐新手）
+
+1. 用浏览器打开上面的仓库地址；
+2. 点页面绿色的 **`<> Code`** 按钮；
+3. 在弹出的菜单里点 **`Download ZIP`**；
+4. 下载完成后，把压缩包解压到一个**全英文路径**的文件夹里
+   （例如 `D:\classroom-monitoring` 或 `~/projects/classroom-monitoring`，**路径里不要有中文和空格**）。
+
+### 方式二：用 git 命令克隆（如果你装了 git）
+
+```bash
+git clone https://github.com/jiayun-xiong/classroom-monitoring-system.git
+# ↑ git clone 是把整个仓库下载到本地的命令
+# ↑ 后面那串是仓库地址；执行完会得到一个 classroom-monitoring-system 文件夹
+
+cd classroom-monitoring-system
+# ↑ 进入刚下载下来的项目文件夹，后面所有命令都在这个文件夹里执行
+```
+
+> 下载完成后，项目根目录里应该能看到 `backend/`、`frontend/`、`start.sh`、`start.bat` 这几个东西。确认你在这个目录里，再继续看下面的步骤。
+
+---
+
 ## 一、你只需要准备一样东西：Node.js
 
 > 完全新手看这一段就够了。本系统**不需要你装 MySQL**——默认用文件数据库（SQLite），解压即用。
