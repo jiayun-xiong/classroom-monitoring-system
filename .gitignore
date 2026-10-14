@@ -34,3 +34,6 @@ coverage/
 # 旧Git历史备份（含.env密钥，绝不入库）
 .git_backup_*/
 .git_backup*/
+
+# SQLite 本地数据库文件
+backend/data/

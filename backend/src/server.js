@@ -13,7 +13,8 @@ async function start() {
   try {
     // 测试数据库连接
     await sequelize.authenticate();
-    console.log('[db] MySQL 连接成功');
+    const dbName = process.env.DB_DIALECT === 'sqlite' ? 'SQLite 文件数据库' : 'MySQL';
+    console.log(`[db] ${dbName} 连接成功`);
 
     // 同步模型（开发阶段用 alter 自动建表；上线前改为迁移脚本）
     // 模型接入后取消注释即可自动建表
@@ -34,7 +35,11 @@ async function start() {
     });
   } catch (err) {
     console.error('[db] 数据库连接失败:', err.message);
-    console.error('请确认 MySQL 已启动，且 .env 中的数据库配置正确');
+    if (process.env.DB_DIALECT === 'sqlite') {
+      console.error('请确认 backend/data 目录可写，且已执行 npm install');
+    } else {
+      console.error('请确认 MySQL 已启动，且 .env 中的数据库配置正确');
+    }
     process.exit(1);
   }
 }
