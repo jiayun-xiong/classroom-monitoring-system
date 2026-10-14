@@ -1,0 +1,603 @@
+{
+  "results": [
+    {
+      "id": "09-T01",
+      "module": "模块09",
+      "title": "教师发布线上考试",
+      "precond": "李老师已登录",
+      "steps": "POST /courses/14/exams body={name:'[测C]期末考试',examTime:未来时间,fullScore:100,form:'online'}",
+      "expected": "code=0,返回考试ID",
+      "actual": "code=0, examId=5",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 0, \"message\": \"考试已发布\", \"data\": {\"id\": 5}}"
+    },
+    {
+      "id": "09-T02",
+      "module": "模块09",
+      "title": "非授课教师不能发布考试",
+      "precond": "王老师已登录(非本课程教师)",
+      "steps": "POST /courses/14/exams (王老师)",
+      "expected": "code=403,仅授课教师可发布",
+      "actual": "code=403, msg=仅授课教师可发布考试",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 403, \"message\": \"仅授课教师可发布考试\", \"data\": null}"
+    },
+    {
+      "id": "09-T03",
+      "module": "模块09",
+      "title": "学生在线作答考试",
+      "precond": "考试已发布(线上),张三已登录",
+      "steps": "POST /exams/5/submit body={score:85}",
+      "expected": "code=0,作答已提交",
+      "actual": "code=0, msg=作答已提交，等待教师确认",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 0, \"message\": \"作答已提交，等待教师确认\", \"data\": null}"
+    },
+    {
+      "id": "09-T04",
+      "module": "模块09",
+      "title": "学生重复提交考试(教师确认前可修改)",
+      "precond": "张三已提交85分",
+      "steps": "POST /exams/5/submit body={score:90}",
+      "expected": "code=0,允许学生在教师确认前修改",
+      "actual": "code=0, msg=作答已提交，等待教师确认",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 0, \"message\": \"作答已提交，等待教师确认\", \"data\": null}"
+    },
+    {
+      "id": "09-T05",
+      "module": "模块09",
+      "title": "非课程学生不能参加考试(不存在考试)",
+      "precond": "张三已登录",
+      "steps": "POST /exams/99999/submit",
+      "expected": "code=404",
+      "actual": "code=404",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 404, \"message\": \"考试不存在\", \"data\": null}"
+    },
+    {
+      "id": "09-T06",
+      "module": "模块09",
+      "title": "考试截止后不能再作答",
+      "precond": "过期考试已创建",
+      "steps": "POST /exams/6/submit",
+      "expected": "code=400,考试时间已过",
+      "actual": "code=400, msg=考试时间已过，无法作答",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"考试时间已过，无法作答\", \"data\": null}"
+    },
+    {
+      "id": "09-T07a",
+      "module": "模块09",
+      "title": "教师查看考试成绩名单",
+      "precond": "考试已发布",
+      "steps": "GET /exams/5/scores",
+      "expected": "code=0,返回学生名单",
+      "actual": "code=0",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 0, \"message\": \"ok\", \"data\": {\"exam\": {\"id\": 5, \"name\": \"[测C]期末考试\", \"examTime\": \"2026-09-30T09:42:25.000Z\", \"fullScore\": 100, \"form\": \"online\"}, \"rows\": [{\"student_id\": 21, \"name\": \"张三\", \"username\": \"zhangsan\", \"score\": 90, \"source\": \"student\"}, {\"student_id\": 22, \"name\": \"李四\", \"username\": \""
+    },
+    {
+      "id": "09-T07b",
+      "module": "模块09",
+      "title": "教师录入考试成绩",
+      "precond": "考试已发布",
+      "steps": "PUT /exams/5/scores body={scores:[张三90,李四80,王五75]}",
+      "expected": "code=0,成绩已保存",
+      "actual": "code=0, msg=成绩已保存",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 0, \"message\": \"成绩已保存\", \"data\": null}"
+    },
+    {
+      "id": "09-T08a",
+      "module": "模块09",
+      "title": "超满分成绩被拒",
+      "precond": "考试满分100",
+      "steps": "PUT /exams/5/scores body={score:150}",
+      "expected": "code=400,成绩需在0-100之间",
+      "actual": "code=400, msg=成绩需在 0-100 之间（学生：21）",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"成绩需在 0-100 之间（学生：21）\", \"data\": null}"
+    },
+    {
+      "id": "09-T08b",
+      "module": "模块09",
+      "title": "负数成绩被拒",
+      "precond": "考试满分100",
+      "steps": "PUT /exams/5/scores body={score:-5}",
+      "expected": "code=400",
+      "actual": "code=400, msg=成绩需在 0-100 之间（学生：21）",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"成绩需在 0-100 之间（学生：21）\", \"data\": null}"
+    },
+    {
+      "id": "09-T09",
+      "module": "模块09",
+      "title": "非授课教师不能修改考试成绩",
+      "precond": "王老师已登录",
+      "steps": "PUT /exams/5/scores (王老师)",
+      "expected": "code=403",
+      "actual": "code=403, msg=仅授课教师可录入成绩",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 403, \"message\": \"仅授课教师可录入成绩\", \"data\": null}"
+    },
+    {
+      "id": "09-T10",
+      "module": "模块09",
+      "title": "学生不能查看他人考试成绩",
+      "precond": "张三已登录",
+      "steps": "GET /exams/5/scores (张三)",
+      "expected": "code=403(角色不符)",
+      "actual": "code=403",
+      "status": "PASS",
+      "evidence": "HTTP 403, resp={\"code\": 403, \"message\": \"无权限访问\", \"data\": null}"
+    },
+    {
+      "id": "09-T11",
+      "module": "模块09",
+      "title": "权重计算总成绩",
+      "precond": "已有考试成绩",
+      "steps": "GET /courses/14/final",
+      "expected": "code=0,返回加权总成绩和排名",
+      "actual": "code=0, 学生数=5",
+      "status": "PASS",
+      "evidence": "HTTP 200, weights={\"checkinWeight\": 20, \"homeworkWeight\": 30, \"examWeight\": 50}, list_len=5"
+    },
+    {
+      "id": "09-T12",
+      "module": "模块09",
+      "title": "总成绩排名计算",
+      "precond": "已有总成绩数据",
+      "steps": "验证排名是否按分数降序排列",
+      "expected": "排名按分数降序,无final排最后",
+      "actual": "排名正确: [1, 2, 3]",
+      "status": "PASS",
+      "evidence": "ranks=[1, 2, 3], sorted_finals=[95, 90, 87.5]"
+    },
+    {
+      "id": "09-T13",
+      "module": "模块09",
+      "title": "学生查看自己的总成绩",
+      "precond": "张三已登录",
+      "steps": "GET /courses/14/final (张三)",
+      "expected": "code=0,me字段为自己的成绩",
+      "actual": "code=0, me={\"student_id\": 21, \"name\": \"张三\", \"username\": \"zhangsan\", \"checkinScore\": 100, \"homeworkScore\": 100, \"examScore\": 90, \"final\": 95, \"rank\": 1}",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "10-T01",
+      "module": "模块10",
+      "title": "教师查看班级成绩明细",
+      "precond": "李老师已登录",
+      "steps": "GET /courses/14/scores",
+      "expected": "code=0,返回作业和考试成绩明细",
+      "actual": "code=0",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "10-T02",
+      "module": "模块10",
+      "title": "学生查看本人成绩明细",
+      "precond": "张三已登录",
+      "steps": "GET /courses/14/scores/me",
+      "expected": "code=0,返回签到/作业/调查/考试明细",
+      "actual": "code=0",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "10-T03",
+      "module": "模块10",
+      "title": "学生不能查看班级成绩",
+      "precond": "张三已登录",
+      "steps": "GET /courses/14/scores (张三)",
+      "expected": "code=403(角色不符)",
+      "actual": "code=403",
+      "status": "PASS",
+      "evidence": "HTTP 403, resp={\"code\": 403, \"message\": \"无权限访问\", \"data\": null}"
+    },
+    {
+      "id": "10-T04",
+      "module": "模块10",
+      "title": "教师修改成绩留痕(score_changes)",
+      "precond": "考试已录入成绩",
+      "steps": "PUT /courses/14/scores/exam + GET score-changes",
+      "expected": "留痕记录包含修改前后值和原因",
+      "actual": "留痕中找到修改记录",
+      "status": "PASS",
+      "evidence": "HTTP 200, changes_count=1"
+    },
+    {
+      "id": "10-T05",
+      "module": "模块10",
+      "title": "修改成绩必须填写原因",
+      "precond": "李老师已登录",
+      "steps": "PUT /courses/14/scores/exam (reason为空)",
+      "expected": "code=400,必须填写原因",
+      "actual": "code=400, msg=修改成绩必须填写原因",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"修改成绩必须填写原因\", \"data\": null}"
+    },
+    {
+      "id": "10-T06a",
+      "module": "模块10",
+      "title": "超满分成绩被拒(成绩管理)",
+      "precond": "考试满分100",
+      "steps": "PUT scores/exam body={score:200}",
+      "expected": "code=400,成绩不能超过满分",
+      "actual": "code=400, msg=成绩不能超过满分 100",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"成绩不能超过满分 100\", \"data\": null}"
+    },
+    {
+      "id": "10-T06b",
+      "module": "模块10",
+      "title": "负数成绩被拒(成绩管理)",
+      "precond": "考试满分100",
+      "steps": "PUT scores/exam body={score:-10}",
+      "expected": "code=400,成绩不合法",
+      "actual": "code=400, msg=成绩不合法",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"成绩不合法\", \"data\": null}"
+    },
+    {
+      "id": "10-T07",
+      "module": "模块10",
+      "title": "非授课教师不能修改他人课程成绩",
+      "precond": "王老师已登录",
+      "steps": "PUT scores/exam (王老师)",
+      "expected": "code=403,仅授课教师/管理员可修改",
+      "actual": "code=403, msg=仅授课教师/管理员可修改成绩",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 403, \"message\": \"仅授课教师/管理员可修改成绩\", \"data\": null}"
+    },
+    {
+      "id": "10-T08",
+      "module": "模块10",
+      "title": "管理员查看课程成绩",
+      "precond": "admin已登录",
+      "steps": "GET /courses/14/scores (admin)",
+      "expected": "code=0,管理员可查看",
+      "actual": "code=0",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "10-T09",
+      "module": "模块10",
+      "title": "修改成绩后通知学生",
+      "precond": "李老师修改张三成绩",
+      "steps": "PUT scores/exam -> GET /notifications (张三)",
+      "expected": "张三收到成绩修改通知",
+      "actual": "找到score类型通知",
+      "status": "PASS",
+      "evidence": "HTTP 200, notif_count=11"
+    },
+    {
+      "id": "11-T01",
+      "module": "模块11",
+      "title": "教师端学情报告",
+      "precond": "李老师已登录",
+      "steps": "GET /courses/14/report",
+      "expected": "code=0,返回总体统计+学生明细+排名",
+      "actual": "code=0, avgCheckin=100, avgHw=100, 学生数=5",
+      "status": "PASS",
+      "evidence": "HTTP 200, overall_keys=['studentCount', 'sessionCount', 'homeworkCount', 'examCount', 'surveyTotal', 'avgCheckinScore', 'avgHomeworkScore', 'avgExamScore', 'avgFinal', 'surveyParticipationRate', 'gradeDist', 'checkinTrend', 'homeworkStats', 'examStats']"
+    },
+    {
+      "id": "11-T02",
+      "module": "模块11",
+      "title": "报告总览卡数据完整性",
+      "precond": "李老师已登录",
+      "steps": "检查overall包含平均分/出勤率/成绩分布",
+      "expected": "包含avgCheckinScore/avgHomeworkScore/gradeDist/checkinTrend",
+      "actual": "全部存在: checkin=True, hw=True, dist=True, trend=True",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T03",
+      "module": "模块11",
+      "title": "学生明细列表",
+      "precond": "李老师已登录",
+      "steps": "检查学生列表数量",
+      "expected": "返回5名学生明细",
+      "actual": "学生数=5",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T04",
+      "module": "模块11",
+      "title": "个人排名字段",
+      "precond": "李老师已登录",
+      "steps": "检查每个学生有finalRank",
+      "expected": "每个学生有排名字段",
+      "actual": "所有学生有排名",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T05",
+      "module": "模块11",
+      "title": "非授课教师不能查看他人课程报告",
+      "precond": "王老师已登录",
+      "steps": "GET /courses/14/report (王老师)",
+      "expected": "code=403,仅授课教师/管理员可查看",
+      "actual": "code=403, msg=仅授课教师/管理员可查看",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 403, \"message\": \"仅授课教师/管理员可查看\", \"data\": null}"
+    },
+    {
+      "id": "11-T06",
+      "module": "模块11",
+      "title": "学生端报告",
+      "precond": "张三已登录",
+      "steps": "GET /courses/14/report/me",
+      "expected": "code=0,返回总体+自己+各项排名",
+      "actual": "code=0, me.final=96, me.finalRank=1",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T07",
+      "module": "模块11",
+      "title": "学生报告不暴露他人明细",
+      "precond": "张三已登录",
+      "steps": "检查学生端报告不包含完整学生列表",
+      "expected": "不返回students列表(只返回me)",
+      "actual": "无students字段",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T08",
+      "module": "模块11",
+      "title": "管理员查看课程报告",
+      "precond": "admin已登录",
+      "steps": "GET /courses/14/report (admin)",
+      "expected": "code=0,管理员可查看",
+      "actual": "code=0",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "11-T09",
+      "module": "模块11",
+      "title": "报告数据与finalScores一致性",
+      "precond": "已有成绩数据",
+      "steps": "对比report和final的张三final分数",
+      "expected": "分数一致",
+      "actual": "report.final=96, final.final=96",
+      "status": "PASS",
+      "evidence": "report=96, final=96"
+    },
+    {
+      "id": "12-T01",
+      "module": "模块12",
+      "title": "通知列表",
+      "precond": "张三已登录",
+      "steps": "GET /notifications",
+      "expected": "code=0,返回通知列表",
+      "actual": "code=0, 通知数=11",
+      "status": "PASS",
+      "evidence": "HTTP 200, count=11"
+    },
+    {
+      "id": "12-T02",
+      "module": "模块12",
+      "title": "未读数(铃铛角标)",
+      "precond": "张三已登录",
+      "steps": "GET /notifications/unread-count",
+      "expected": "code=0,返回未读数",
+      "actual": "code=0, count=11",
+      "status": "PASS",
+      "evidence": "HTTP 200, count=11"
+    },
+    {
+      "id": "12-T03",
+      "module": "模块12",
+      "title": "按类型未读通知",
+      "precond": "张三已登录",
+      "steps": "GET /notifications/unread-by-type?courseId=14",
+      "expected": "code=0,返回各类型未读数",
+      "actual": "code=0, data={\"message\": 0, \"homework\": 0, \"survey\": 0, \"exam\": 3, \"score\": 2, \"checkin\": 0, \"emotion\": 0}",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "12-T04",
+      "module": "模块12",
+      "title": "考试发布通知学生",
+      "precond": "李老师发布考试",
+      "steps": "POST考试 -> GET通知(张三)",
+      "expected": "张三收到exam类型通知",
+      "actual": "找到考试通知",
+      "status": "PASS",
+      "evidence": "HTTP 200, exam_id=7"
+    },
+    {
+      "id": "12-T05",
+      "module": "模块12",
+      "title": "标记已读后角标-1",
+      "precond": "张三有未读通知",
+      "steps": "POST /notifications/:id/read -> GET unread-count",
+      "expected": "未读数减少1",
+      "actual": "before=12, after=11",
+      "status": "PASS",
+      "evidence": "before=12, after=11"
+    },
+    {
+      "id": "12-T06",
+      "module": "模块12",
+      "title": "per-user已读隔离(关键基线)",
+      "precond": "教师发全班通知",
+      "steps": "张三全部已读 -> 查李四未读数",
+      "expected": "张三=0,李四不变",
+      "actual": "张三: 12->0, 李四: 12->12",
+      "status": "PASS",
+      "evidence": "张三: 12->0, 李四: 12->12"
+    },
+    {
+      "id": "12-T07",
+      "module": "模块12",
+      "title": "全部已读",
+      "precond": "张三有未读通知",
+      "steps": "POST /notifications/read-all",
+      "expected": "未读数=0",
+      "actual": "updated=14, after_count=0",
+      "status": "PASS",
+      "evidence": "updated=14, count=0"
+    },
+    {
+      "id": "12-T08",
+      "module": "模块12",
+      "title": "按类型标记已读",
+      "precond": "张三有exam未读",
+      "steps": "POST read-by-type -> GET unread-by-type",
+      "expected": "exam未读=0",
+      "actual": "before=1, after=0",
+      "status": "PASS",
+      "evidence": "before=1, after=0"
+    },
+    {
+      "id": "12-T09",
+      "module": "模块12",
+      "title": "教师->学生私信",
+      "precond": "李老师已登录",
+      "steps": "POST send(receiverIds=[张三])",
+      "expected": "张三收到私信",
+      "actual": "张三收到私信",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "12-T10",
+      "module": "模块12",
+      "title": "学生不能查看他人通知",
+      "precond": "教师发私信给张三",
+      "steps": "GET /notifications (李四)",
+      "expected": "李四看不到张三的私信",
+      "actual": "李四看不到张三私信",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "12-T11",
+      "module": "模块12",
+      "title": "管理员->全员通知",
+      "precond": "admin已登录",
+      "steps": "POST send(receiverRole=student)",
+      "expected": "所有学生收到",
+      "actual": "张三收到",
+      "status": "PASS",
+      "evidence": "HTTP 200"
+    },
+    {
+      "id": "12-T12",
+      "module": "模块12",
+      "title": "学生不能给学生发消息",
+      "precond": "张三已登录",
+      "steps": "POST send(receiverRole=student)",
+      "expected": "code=400,学生仅可给教师发消息",
+      "actual": "code=400, msg=学生仅可给授课教师发送消息",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"学生仅可给授课教师发送消息\", \"data\": null}"
+    },
+    {
+      "id": "12-T13",
+      "module": "模块12",
+      "title": "教师不能给教师发消息",
+      "precond": "李老师已登录",
+      "steps": "POST send(receiverRole=teacher)",
+      "expected": "code=400,教师仅可给学生发消息",
+      "actual": "code=400, msg=教师仅可给学生发送消息",
+      "status": "PASS",
+      "evidence": "HTTP 200, resp={\"code\": 400, \"message\": \"教师仅可给学生发送消息\", \"data\": null}"
+    },
+    {
+      "id": "12-T14",
+      "module": "模块12",
+      "title": "作业发布通知学生",
+      "precond": "李老师发布作业",
+      "steps": "POST homework -> GET unread-by-type",
+      "expected": "张三收到homework类型通知",
+      "actual": "homework未读=1",
+      "status": "PASS",
+      "evidence": "homework未读=1"
+    },
+    {
+      "id": "12-T15",
+      "module": "模块12",
+      "title": "签到发布通知学生",
+      "precond": "李老师发布签到",
+      "steps": "POST checkin",
+      "expected": "code=0",
+      "actual": "code=404, msg=接口不存在",
+      "status": "FAIL",
+      "evidence": "HTTP 404, resp={\"code\": 404, \"message\": \"接口不存在\", \"data\": null}"
+    },
+    {
+      "id": "FE-_src_views_teacher_Exams.vue",
+      "module": "前端",
+      "title": "页面/src/views/teacher/Exams.vue",
+      "precond": "前端运行中",
+      "steps": "curl http://localhost:5173/src/views/teacher/Exams.vue",
+      "expected": "HTTP 200",
+      "actual": "HTTP 200",
+      "status": "PASS",
+      "evidence": "status=200"
+    },
+    {
+      "id": "FE-_src_views_student_Scores.vue",
+      "module": "前端",
+      "title": "页面/src/views/student/Scores.vue",
+      "precond": "前端运行中",
+      "steps": "curl http://localhost:5173/src/views/student/Scores.vue",
+      "expected": "HTTP 200",
+      "actual": "HTTP 200",
+      "status": "PASS",
+      "evidence": "status=200"
+    },
+    {
+      "id": "FE-_src_views_Notification.vue",
+      "module": "前端",
+      "title": "页面/src/views/Notification.vue",
+      "precond": "前端运行中",
+      "steps": "curl http://localhost:5173/src/views/Notification.vue",
+      "expected": "HTTP 200",
+      "actual": "HTTP 200",
+      "status": "PASS",
+      "evidence": "status=200"
+    }
+  ],
+  "summary": {
+    "pass": 51,
+    "fail": 1,
+    "total": 52,
+    "module_stats": {
+      "模块09": {
+        "pass": 15,
+        "fail": 0
+      },
+      "模块10": {
+        "pass": 10,
+        "fail": 0
+      },
+      "模块11": {
+        "pass": 9,
+        "fail": 0
+      },
+      "模块12": {
+        "pass": 14,
+        "fail": 1
+      },
+      "前端": {
+        "pass": 3,
+        "fail": 0
+      }
+    }
+  }
+}

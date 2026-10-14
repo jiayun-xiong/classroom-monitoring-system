@@ -1,0 +1,36 @@
+# 依赖
+node_modules/
+**/node_modules/
+
+# 构建产物
+dist/
+build/
+*.tsbuildinfo
+
+# 环境变量（含密钥，绝不入库；.env.example 可入库）
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 测试缓存
+coverage/
+.nyc_output/
+
+# 旧Git历史备份（含.env密钥，绝不入库）
+.git_backup_*/
+.git_backup*/
