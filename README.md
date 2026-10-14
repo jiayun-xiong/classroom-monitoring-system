@@ -16,11 +16,12 @@
 
 下载后双击安装包，全部一路点"继续 / 下一步"即可，不用改任何选项。
 
-安装完成后，**新开一个终端（Mac 是"终端"App，Windows 是"命令提示符"）**，输入下面命令能看到版本号就说明装好了：
+安装完成后，**新开一个终端（Mac 是"终端"App，Windows 是"命令提示符"）**，输入下面命令：
 
 ```bash
 node -v
-# 看到 v20.x 或 v22.x 之类即成功
+#  ↑ 这行命令的作用：查看当前装的 Node.js 版本号
+#  ↓ 如果装成功了，终端会显示类似 v22.11.0 的字样，看到 v 开头的版本号就说明装好了
 ```
 
 ---
@@ -29,21 +30,24 @@ node -v
 
 ### Mac 用户
 
-打开"终端"，进入项目文件夹，执行：
+打开"终端"，用 `cd` 命令进入项目文件夹后，执行：
 
 ```bash
 bash start.sh
+#  ↑ bash 是"用 bash 来运行一个脚本"的意思
+#  ↑ start.sh 是项目根目录里那个一键启动脚本
+#  它会自动完成：检查 Node → 生成配置 → 安装依赖 → 启动前后端
 ```
 
 ### Windows 用户
 
 打开项目文件夹，**双击 `start.bat`**。
 
-脚本会自动完成：检查 Node → 生成配置 → 安装依赖（首次约 3~5 分钟）→ 启动后端和前端。
-
 > 国内网络如果 `npm install` 很慢，可以先换国内镜像源再启动：
+>
 > ```bash
 > npm config set registry https://registry.npmmirror.com
+> # ↑ 这行命令的作用：把 npm 的下载地址从国外服务器换成淘宝镜像，下载速度会快很多
 > ```
 
 ---
@@ -56,17 +60,31 @@ bash start.sh
 
 ```bash
 cd backend
-cp .env.example .env     # Windows 用 copy .env.example .env
+# ↑ cd 是"进入文件夹"的命令，这行是进入 backend 后端目录
+
+cp .env.example .env
+# ↑ cp 是"复制文件"的命令：把配置模板 .env.example 复制成真正生效的配置文件 .env
+# ↓ Windows 没有 cp 命令，请改用下面这行：
+# copy .env.example .env
+
 npm install
+# ↑ 下载后端需要的所有第三方代码库（第一次运行要等几分钟）
+
 npm run dev
+# ↑ 启动后端服务，启动后这个窗口就被占用了，不要关
 ```
 
 **窗口 2 —— 前端：**
 
 ```bash
 cd frontend
+# ↑ 进入前端目录
+
 npm install
+# ↑ 下载前端需要的依赖
+
 npm run dev
+# ↑ 启动前端，看到 "Local: http://localhost:5173" 就是成功了
 ```
 
 `.env.example` 默认就是 SQLite 模式，**什么都不用改**，直接能跑。
@@ -100,13 +118,16 @@ npm run dev
 如果需要按作业要求使用 MySQL 8：
 
 1. 本机装好并启动 MySQL 8；
-2. 执行建库 SQL：
+2. 打开 MySQL，执行下面的建库 SQL：
 
 ```sql
 CREATE DATABASE classroom_monitor DEFAULT CHARACTER SET utf8mb4;
+-- ↑ CREATE DATABASE 是 SQL 里"新建数据库"的命令
+-- ↑ classroom_monitor 是数据库名
+-- ↑ DEFAULT CHARACTER SET utf8mb4 表示用 utf8mb4 编码，这样才能正常存中文和 emoji
 ```
 
-3. 编辑 `backend/.env`：把 `DB_DIALECT=sqlite` 那行注释掉，取消下面 MySQL 段的注释，并把 `DB_PASSWORD` 改成你自己的 MySQL 密码；
+3. 用记事本编辑 `backend/.env`：把 `DB_DIALECT=sqlite` 那行前面加 `#`（注释掉），取消下面 MySQL 段每行前面的 `#`，并把 `DB_PASSWORD` 改成你自己的 MySQL 密码；
 4. 重新 `npm run dev`。
 
 ---
@@ -114,12 +135,14 @@ CREATE DATABASE classroom_monitor DEFAULT CHARACTER SET utf8mb4;
 ## 六、常见问题（FAQ）
 
 **Q1：双击 start.bat 一闪就没了？**
-A：说明 Node.js 没装好，或没"新开"命令行窗口。请回到第一步确认 `node -v` 有输出。
+A：说明 Node.js 没装好。请回到第一步确认 `node -v` 有输出。
 
 **Q2：`npm install` 卡住或报错 ETIMEDOUT？**
 A：网络问题。执行下面命令换成淘宝镜像后重试：
+
 ```bash
 npm config set registry https://registry.npmmirror.com
+# ↑ 把 npm 的下载源换成国内镜像
 ```
 
 **Q3：后端启动报 `EADDRINUSE: port 3000 already in use`？**
@@ -147,25 +170,25 @@ A：Windows 没有 `cp` 命令，用 `copy .env.example .env`，或者直接双�
 
 ```
 .
-├── backend/                # 后端
+├── backend/                # 后端（Node.js 服务，负责数据和接口）
 │   ├── src/
 │   │   ├── config/         # 数据库配置（MySQL / SQLite 自动切换）
-│   │   ├── controllers/    # 业务控制器
-│   │   ├── models/         # 数据模型（自动建表）
-│   │   ├── routes/         # 接口路由
-│   │   ├── middlewares/    # JWT 鉴权
-│   │   ├── services/       # 业务服务
-│   │   ├── socket/         # WebSocket 弹幕
+│   │   ├── controllers/    # 业务逻辑：收到请求后干什么
+│   │   ├── models/         # 数据表结构定义（自动建表）
+│   │   ├── routes/         # 路由：什么网址对应哪个处理函数
+│   │   ├── middlewares/    # 中间件：登录校验等通用处理
+│   │   ├── services/       # 业务服务层
+│   │   ├── socket/         # WebSocket：弹幕实时推送
 │   │   ├── jobs/           # 定时任务
-│   │   └── seed/           # 测试账号初始化
-│   └── .env.example        # 配置模板
-├── frontend/               # 前端（三端同一工程）
+│   │   └── seed/           # 首次启动写入测试账号
+│   └── .env.example        # 配置模板（复制成 .env 才生效）
+├── frontend/               # 前端（三端同一套网页代码）
 │   └── src/
-│       ├── api/            # 接口封装
-│       ├── views/          # student / teacher / admin 页面
-│       ├── stores/         # Pinia 状态
-│       └── router/         # 路由与权限守卫
-├── start.sh                # Mac 一键启动
-├── start.bat               # Windows 一键启动
-└── README.md
+│       ├── api/            # 封装调用后端接口的代码
+│       ├── views/          # 各个页面（student / teacher / admin）
+│       ├── stores/         # Pinia：全局状态管理（登录状态等）
+│       └── router/         # 路由：网址和页面的对应关系
+├── start.sh                # Mac 一键启动脚本
+├── start.bat               # Windows 一键启动脚本
+└── README.md               # 本说明文件
 ```
